@@ -29,7 +29,7 @@ CardAccount = namedtuple('CardAccount', ['id', 'number', 'pin', 'balance'])
 
 
 @dataclass
-class Account:
+class GenerateCard:
     def __post_init__(self):
         while True:
             create_card_num = f'{INN}{random.randrange(1111111111, 9999999999, FIXED_DIGITS)}'
@@ -41,8 +41,8 @@ class Account:
 
 
 class BankAccount:
-    def __init__(self, account: Account) -> None:
-        self.__account = account
+    def __init__(self, card: GenerateCard) -> None:
+        self.__card = card
         self.__balance = 0
 
     @property
@@ -50,11 +50,11 @@ class BankAccount:
         return self.__balance
 
     @property
-    def get_account(self) -> Account:
-        return self.__account
+    def get_account(self) -> GenerateCard:
+        return self.__card
 
-    def __eq__(self, other: Account) -> bool:
-        return (self.__account.number, self.__account.pin) == (
+    def __eq__(self, other: GenerateCard) -> bool:
+        return (self.__card.number, self.__card.pin) == (
             other.number, other.pin
         )
 
@@ -81,7 +81,7 @@ class Database:
 
 
 if __name__ == '__main__':
-    account_card = None
+    card = None
     bank_account = None
     db = Database()
     is_flag = True
@@ -95,12 +95,12 @@ if __name__ == '__main__':
 
         if check_number == 1:
             print('\nYour card has been created')
-            account_card = Account()
-            bank_account = BankAccount(account_card)
+            card = GenerateCard()
+            bank_account = BankAccount(card)
             db.create(bank_account)
 
-            print(f'Your card number:\n{account_card.number}')
-            print(f'Your card PIN:\n{account_card.pin}\n')
+            print(f'Your card number:\n{card.number}')
+            print(f'Your card PIN:\n{card.pin}\n')
 
             continue
 
