@@ -1,2 +1,2 @@
-# Simple-Banking-System
+# Hyperskill all python project
 This Academy JetBrains Python
