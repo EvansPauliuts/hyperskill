@@ -1,9 +1,7 @@
-from __future__ import annotations
-
 import random
-import sqlite3
+
 from attrs import make_class, field, define, Factory
-from sqlite3 import Connection, Cursor
+from sqlite3 import Connection, Cursor, connect
 
 FIXED_DIGITS = 10
 INN = 400_000
@@ -66,7 +64,7 @@ class BankAccount:
 
 @define
 class Database:
-    conn: Connection = sqlite3.connect('card.s3db')
+    conn: Connection = connect('card.s3db')
     cur: Cursor = field(factory=conn.cursor)
 
     def __attrs_post_init__(self):
