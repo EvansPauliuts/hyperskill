@@ -102,7 +102,6 @@ if __name__ == '__main__':
             print('\nYour card has been created')
             card = GenerateCard()
             bank_account = BankAccount(card)
-            print(bank_account)
             db.create(bank_account)
 
             print(f'Your card number:\n{card.number}')
@@ -122,7 +121,7 @@ if __name__ == '__main__':
             )
 
             if bank_account_db:
-                _, _, _, card_balance = bank_account_db
+                *_, card_balance = bank_account_db
 
                 while True:
                     print('1. Balance')
