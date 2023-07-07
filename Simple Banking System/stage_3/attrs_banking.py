@@ -4,7 +4,6 @@ from attrs import field, define, Factory
 from sqlite3 import Connection, Cursor, connect
 from typing import TypeVar
 
-TCardAccount = TypeVar('TCardAccount', bound='CardAccount')
 TGenerateCard = TypeVar('TGenerateCard', bound='GenerateCard')
 TBankAccount = TypeVar('TBankAccount', bound='BankAccount')
 TDatabase = TypeVar('TDatabase', bound='Database')
@@ -27,14 +26,6 @@ def luhn_checksum(card_number: int) -> int:
 
 def is_luhn_valid(card_number: int) -> bool:
     return luhn_checksum(card_number) == 0
-
-
-@define(slots=True)
-class CardAccount:
-    id: int
-    number: str
-    pin: str
-    balance: int
 
 
 @define
@@ -86,12 +77,12 @@ class Database:
         self.conn.commit()
         return self
 
-    def read(self: TDatabase, number: str, pin: str) -> CardAccount | None:
+    def read(self: TDatabase, number: str, pin: str) -> tuple | None:
         self.cur.execute("SELECT * FROM card WHERE number = (?) AND pin = (?)", (
             number, pin,
         ))
         rows = self.cur.fetchone()
-        return CardAccount(*rows) if rows else None
+        return rows or None
 
 
 if __name__ == '__main__':
@@ -111,6 +102,7 @@ if __name__ == '__main__':
             print('\nYour card has been created')
             card = GenerateCard()
             bank_account = BankAccount(card)
+            print(bank_account)
             db.create(bank_account)
 
             print(f'Your card number:\n{card.number}')
@@ -130,6 +122,8 @@ if __name__ == '__main__':
             )
 
             if bank_account_db:
+                _, _, _, card_balance = bank_account_db
+
                 while True:
                     print('1. Balance')
                     print('2. Log out')
@@ -138,7 +132,7 @@ if __name__ == '__main__':
                     check_d = int(input())
 
                     if check_d == 1:
-                        print(f'\nBalance: {bank_account_db.balance}\n')
+                        print(f'\nBalance: {card_balance}\n')
                         continue
                     elif check_d == 2:
                         print('You have successfully logged out!\n')
