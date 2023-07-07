@@ -2,6 +2,12 @@ import random
 
 from attrs import field, define, Factory
 from sqlite3 import Connection, Cursor, connect
+from typing import TypeVar
+
+TCardAccount = TypeVar('TCardAccount', bound='CardAccount')
+TGenerateCard = TypeVar('TGenerateCard', bound='GenerateCard')
+TBankAccount = TypeVar('TBankAccount', bound='BankAccount')
+TDatabase = TypeVar('TDatabase', bound='Database')
 
 FIXED_DIGITS = 10
 INN = 400_000
@@ -35,7 +41,7 @@ class CardAccount:
 class GenerateCard:
     number: str = field(init=False)
     pin: str = field(init=False)
-    def __attrs_post_init__(self) -> None:
+    def __attrs_post_init__(self: TGenerateCard) -> TGenerateCard:
         while True:
             create_card_num = f'{INN}{random.randrange(1111111111, 9999999999, FIXED_DIGITS)}'
 
@@ -44,6 +50,8 @@ class GenerateCard:
                 self.pin = f'{random.randrange(1111, 9999, 4)}'
                 break
 
+        return self
+
 
 @define(slots=True, frozen=True)
 class BankAccount:
@@ -51,11 +59,11 @@ class BankAccount:
     __balance: int = field(default=0)
 
     @property
-    def balance(self) -> int:
+    def balance(self: TBankAccount) -> int:
         return self.__balance
 
     @property
-    def get_account(self) -> GenerateCard:
+    def get_account(self: TBankAccount) -> GenerateCard:
         return self.__card
 
 
@@ -64,19 +72,21 @@ class Database:
     conn: Connection = connect('card.s3db')
     cur: Cursor = field(factory=conn.cursor)
 
-    def __attrs_post_init__(self):
+    def __attrs_post_init__(self: TDatabase) -> TDatabase:
         self.cur.execute(
             "CREATE TABLE IF NOT EXISTS card "
             "(id INTEGER PRIMARY KEY, number TEXT, pin TEXT, balance INTEGER DEFAULT 0)"
         )
+        return self
 
-    def create(self, card_item: BankAccount) -> None:
+    def create(self: TDatabase, card_item: BankAccount) -> TDatabase:
         self.cur.execute("INSERT INTO card VALUES (NULL, ?, ?, ?)", (
-            card_item.get_account.number, card_item.get_account.pin, card_item.balance
+            card_item.get_account.number, card_item.get_account.pin, card_item.balance,
         ))
         self.conn.commit()
+        return self
 
-    def read(self, number: str, pin: str) -> CardAccount | None:
+    def read(self: TDatabase, number: str, pin: str) -> CardAccount | None:
         self.cur.execute("SELECT * FROM card WHERE number = (?) AND pin = (?)", (
             number, pin,
         ))
