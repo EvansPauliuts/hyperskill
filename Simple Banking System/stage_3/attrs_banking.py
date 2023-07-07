@@ -1,6 +1,6 @@
 import random
 
-from attrs import make_class, field, define, Factory
+from attrs import field, define, Factory
 from sqlite3 import Connection, Cursor, connect
 
 FIXED_DIGITS = 10
@@ -23,22 +23,19 @@ def is_luhn_valid(card_number: int) -> bool:
     return luhn_checksum(card_number) == 0
 
 
-CardAccount = make_class(
-    'CardAccount',
-    {
-        'id': field(type=int),
-        'number': field(type=str),
-        'pin': field(type=str),
-        'balance': field(type=int),
-    }
-)
+@define(slots=True)
+class CardAccount:
+    id: int
+    number: str
+    pin: str
+    balance: int
 
 
 @define
 class GenerateCard:
     number: str = field(init=False)
     pin: str = field(init=False)
-    def __attrs_post_init__(self):
+    def __attrs_post_init__(self) -> None:
         while True:
             create_card_num = f'{INN}{random.randrange(1111111111, 9999999999, FIXED_DIGITS)}'
 
@@ -50,7 +47,7 @@ class GenerateCard:
 
 @define(slots=True, frozen=True)
 class BankAccount:
-    __card: GenerateCard = field(default=Factory(dict))
+    __card: GenerateCard = field(default=Factory(GenerateCard))
     __balance: int = field(default=0)
 
     @property
@@ -73,14 +70,16 @@ class Database:
             "(id INTEGER PRIMARY KEY, number TEXT, pin TEXT, balance INTEGER DEFAULT 0)"
         )
 
-    def create(self, card: BankAccount) -> None:
+    def create(self, card_item: BankAccount) -> None:
         self.cur.execute("INSERT INTO card VALUES (NULL, ?, ?, ?)", (
-            card.get_account.number, card.get_account.pin, card.balance
+            card_item.get_account.number, card_item.get_account.pin, card_item.balance
         ))
         self.conn.commit()
 
     def read(self, number: str, pin: str) -> CardAccount | None:
-        self.cur.execute(f"SELECT * FROM card WHERE number = {number} AND pin = {pin}")
+        self.cur.execute("SELECT * FROM card WHERE number = (?) AND pin = (?)", (
+            number, pin,
+        ))
         rows = self.cur.fetchone()
         return CardAccount(*rows) if rows else None
 
